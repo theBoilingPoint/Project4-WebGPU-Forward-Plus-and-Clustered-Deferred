@@ -17,7 +17,9 @@ fn convertDepthToNDCWithProjMatrix(depthView: f32) -> f32 {
 }
 
 // Helper function to calculate frustum depth at slice k
-// For the depth frustums (Z-axis), divide the space between the near and far planes logarithmically to maintain perspective accuracy:
+// For the depth frustums (Z-axis), divide the space between the near and far planes logarithmically to maintain perspective accuracy.
+// More specifically, the log depth equation is (f/n) ^ (k/N), where k is the current slice index and N is the total number of slices
+// In many camera conventions, forward is −Z in view space, so points in front of the camera have depthView < 0
 fn calculateFrustumDepth(n: f32, f: f32, numOfSlices: f32, currentSlice: f32) -> f32 {
     let logDepthRatio: f32 = log(f / n);
     let depthView: f32 = -n * exp(logDepthRatio * (currentSlice / numOfSlices));
@@ -56,10 +58,10 @@ fn main(@builtin(global_invocation_id) globalIdx: vec3u) {
     let clusterIdx_f32 = f32(clusterIdx);  // Convert clusterIdx to float once to avoid redundant casts
     // Replace division by multiplication with the inverse
     let i = u32(floor(clusterIdx_f32 * dimYTimesDimZInv));
-    let remainder = clusterIdx - i * dimYTimesDimZ;  
+    let remainder = clusterIdx - i * dimYTimesDimZ; // equivalent to clusterIndex % (CLUSTER_DIMENSION_Y * CLUSTER_DIMENSION_Z);
     let remainder_f32 = f32(remainder); 
     let j = u32(floor(remainder_f32 * dimZInv));  
-    let k = remainder - j * CLUSTER_DIMENSIONS.z;  
+    let k = remainder - j * CLUSTER_DIMENSIONS.z; // remainder % CLUSTER_DIMENSION_Z;
     /******************************************************************************/
 
     // ------------------------------------
@@ -70,10 +72,11 @@ fn main(@builtin(global_invocation_id) globalIdx: vec3u) {
     //     - Calculate the depth bounds for this cluster in Z (near and far planes).
     //     - Convert these screen and depth bounds into view-space coordinates.
     //     - Store the computed bounding box (AABB) for the cluster.
-        let n = cameraUniforms.nearAndFar.x;
+    let n = cameraUniforms.nearAndFar.x;
     let f = cameraUniforms.nearAndFar.y;
 
-    // Calculate screen-space NDC coordinates 
+    // Calculate screen-space NDC coordinates
+    // Convert from [0,1] to [-1,1] because we need to convert them to view space later
     let ndcX_min: f32 = (f32(i) / f32(CLUSTER_DIMENSIONS.x)) * 2.0 - 1.0;
     let ndcX_max: f32 = (f32(i + 1) / f32(CLUSTER_DIMENSIONS.x)) * 2.0 - 1.0;
     let ndcY_min: f32 = (f32(j) / f32(CLUSTER_DIMENSIONS.y)) * 2.0 - 1.0;

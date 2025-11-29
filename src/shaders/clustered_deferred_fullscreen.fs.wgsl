@@ -5,17 +5,22 @@
 @group(${bindGroup_scene}) @binding(1) var<storage, read> lightSet: LightSet;
 @group(${bindGroup_scene}) @binding(2) var<storage, read> clusterSet: ClusterSet;
 
-@group(${bindGroup_gBuffer}) @binding(0) var posTex: texture_2d<f32>;
-@group(${bindGroup_gBuffer}) @binding(1) var norTex: texture_2d<f32>;
-@group(${bindGroup_gBuffer}) @binding(2) var albedoTex: texture_2d<f32>;
+@group(1) @binding(0) var posTex: texture_2d<f32>;
+@group(1) @binding(1) var norTex: texture_2d<f32>;
+@group(1) @binding(2) var albedoTex: texture_2d<f32>;
 
 struct FragmentInput
 {
     @builtin(position) fragPos: vec4f
 }
 
+struct FragmentOutput {
+    @location(0) baseColor: vec4<f32>,
+    @location(1) extractedColor: vec4<f32>,
+}
+
 @fragment
-fn main(in: FragmentInput) -> @location(0) vec4f {
+fn main(in: FragmentInput) -> FragmentOutput {
     let pixelPos: vec2<u32> = vec2<u32>(in.fragPos.xy);
     let nor = textureLoad(norTex, pixelPos, 0);
     let diffuseColor = textureLoad(albedoTex, pixelPos, 0);
@@ -24,6 +29,7 @@ fn main(in: FragmentInput) -> @location(0) vec4f {
     var pos_ndc = cameraUniforms.viewProj * vec4<f32>(pos.xyz, 1.0);
     pos_ndc = pos_ndc / pos_ndc.w;
 
+    // map from [-1,1] to [0,1]
     let scaledPos_ndc = pos_ndc * 0.5 + 0.5;
     let i = u32(floor(scaledPos_ndc.x * f32(CLUSTER_DIMENSIONS.x)));
     let j = u32(floor(scaledPos_ndc.y * f32(CLUSTER_DIMENSIONS.y)));
@@ -46,5 +52,9 @@ fn main(in: FragmentInput) -> @location(0) vec4f {
     }
 
     var finalColor = diffuseColor.rgb * totalLightContrib.rgb;
-    return vec4(finalColor, 1.0);
+    var output: FragmentOutput;
+    output.baseColor = vec4<f32>(finalColor, 1.0);
+    output.extractedColor = vec4<f32>(1.0, 0.0, 0.0, 1.0);
+
+    return output;
 }

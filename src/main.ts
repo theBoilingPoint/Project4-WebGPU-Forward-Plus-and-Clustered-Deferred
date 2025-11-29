@@ -54,3 +54,9 @@ let renderModeController = gui.add({ mode: renderModes.naive }, 'mode', renderMo
 renderModeController.onChange(setRenderer);
 
 setRenderer(renderModeController.getValue());
+
+// const postProcessingEffects = {
+//     bloom: 'bloom',
+//     toon: 'toon'
+// }
+// let postProcessingController = gui.add({ effect: postProcessingEffects.bloom }, 'effect', postProcessingEffects);
