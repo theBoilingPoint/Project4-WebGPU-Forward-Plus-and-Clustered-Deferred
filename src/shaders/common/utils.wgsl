@@ -1,4 +1,8 @@
-// CHECKITOUT: code that you add here will be prepended to all shaders
+const CLUSTER_DIMENSIONS = vec3u(${clusterDimensions.x}, ${clusterDimensions.y}, ${clusterDimensions.z});
+// Gaussian Blur Kernel
+const gaussianBlurWeights: array<f32, 5> = array<f32, 5>(0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
+
+
 struct Light {
     pos: vec3f,
     color: vec3f
@@ -10,8 +14,6 @@ struct LightSet {
 }
 
 // TODO-2: you may want to create a ClusterSet struct similar to LightSet
-const CLUSTER_DIMENSIONS = vec3u(${clusterDimensions.x}, ${clusterDimensions.y}, ${clusterDimensions.z});
-
 struct AABB {
     min: vec3f,
     max: vec3f
@@ -49,6 +51,3 @@ fn calculateLightContrib(light: Light, posWorld: vec3f, nor: vec3f) -> vec3f {
     let lambert = max(dot(nor, normalize(vecToLight)), 0.f);
     return light.color * lambert * rangeAttenuation(distToLight);
 }
-
-// Gaussian Blur Kernel
-const gaussianBlurWeights: array<f32, 5> = array<f32, 5>(0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);

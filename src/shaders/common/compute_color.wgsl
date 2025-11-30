@@ -1,33 +1,14 @@
-// TODO-3: implement the Clustered Deferred fullscreen fragment shader
+// This shader is concadenated to any shader that needs to read from light clusters and compute color
 @group(${bindGroup_scene}) @binding(0) var<uniform> cameraUniforms: CameraUniforms;
 @group(${bindGroup_scene}) @binding(1) var<storage, read> lightSet: LightSet;
 @group(${bindGroup_scene}) @binding(2) var<storage, read> clusterSet: ClusterSet;
 
-@group(1) @binding(0) var posTex: texture_2d<f32>;
-@group(1) @binding(1) var norTex: texture_2d<f32>;
-@group(1) @binding(2) var albedoTex: texture_2d<f32>;
-
-struct FragmentInput
-{
-    @builtin(position) fragPos: vec4f
-}
-
-fn computeOutput(pixelPos: vec2<u32>) -> vec3f {
-    // OPTIMIZATION 1: Early Exit
-    // If this pixel has no geometry (alpha 0), skip all lighting math.
-    let diffuseColor = textureLoad(albedoTex, pixelPos, 0);
-    if (diffuseColor.a == 0.0) {
-        return vec3f(0.0);
-    }
-
-    let nor = textureLoad(norTex, pixelPos, 0);
-    let pos = textureLoad(posTex, pixelPos, 0);
-
-    // OPTIMIZATION 2: Single Matrix Multiply
+fn computeColor(pos: vec3<f32>, nor: vec3<f32>, diffuseColor: vec4<f32>) -> vec3f {
+    // OPTIMIZATION: Single Matrix Multiply
     // We calculate Clip Space once.
     // 'pos_ndc.w' in a standard perspective matrix IS the View Space Z (negated).
     // This allows us to skip calculating 'pos_view = view * pos' entirely.
-    var pos_ndc = cameraUniforms.viewProj * vec4<f32>(pos.xyz, 1.0);
+    var pos_ndc = cameraUniforms.viewProj * vec4<f32>(pos, 1.0);
 
     // Perspective division to get NDC (0 to 1 range logic)
     // We strictly use this for X/Y to match the light-culling grid exactly.
@@ -54,7 +35,7 @@ fn computeOutput(pixelPos: vec2<u32>) -> vec3f {
     let numLightsInCluster = cluster.numLights;
     for (var lightIdx = 0u; lightIdx < numLightsInCluster; lightIdx++) {
         let light = lightSet.lights[cluster.lightIndices[lightIdx]];
-        totalLightContrib += calculateLightContrib(light, pos.xyz, nor.xyz);
+        totalLightContrib += calculateLightContrib(light, pos, nor);
     }
 
    return diffuseColor.rgb * totalLightContrib.rgb;

@@ -1,22 +1,24 @@
 // CHECKITOUT: this file loads all the shaders and preprocesses them with some common code
-import commonRaw from './common.wgsl?raw';
+import commonRaw from './common/utils.wgsl?raw';
 
-import naiveVertRaw from './naive.vs.wgsl?raw';
-import naiveFragRaw from './naive.fs.wgsl?raw';
+import naiveVertRaw from './pipeline/naive.vs.wgsl?raw';
+import naiveFragRaw from './pipeline/naive.fs.wgsl?raw';
 
-import forwardPlusFragRaw from './forward_plus.fs.wgsl?raw';
+import computeColorRaw from './common/compute_color.wgsl?raw';
 
-import gBufferFragRaw from './gBuffer.fs.wgsl?raw';
-import clusteredDeferredFullscreenVertRaw from './clustered_deferred_fullscreen.vs.wgsl?raw';
-import clusteredDeferredFullscreenRaw from './clustered_deferred_fullscreen.wgsl?raw';
-import clusteredDeferredFullscreenFragRaw from './clustered_deferred_fullscreen.fs.wgsl?raw';
+import forwardPlusFragRaw from './pipeline/forward_plus.fs.wgsl?raw';
+
+import gBufferFragRaw from './pipeline/gBuffer.fs.wgsl?raw';
+import clusteredDeferredFullscreenVertRaw from './pipeline/fullscreen_triangle.vs.wgsl?raw';
+import clusteredDeferredFullscreenFragRaw from './pipeline/clustered_deferred_fullscreen.fs.wgsl?raw';
+
 import bloomExtractionFragRaw from './post_processing/bloom_extraction.wgsl?raw';
 import bloomCombineFragRaw from './post_processing/bloom_combine.fs.wgsl?raw';
 import gaussianBlurHorizontalRaw from './post_processing/gaussian_blur_horizontal.fs.wgsl?raw';
 import gaussianBlurVerticalRaw from './post_processing/gaussian_blur_vertical.fs.wgsl?raw';
 
-import moveLightsComputeRaw from './move_lights.cs.wgsl?raw';
-import clusteringComputeRaw from './clustering.cs.wgsl?raw';
+import moveLightsComputeRaw from './compute/move_lights.cs.wgsl?raw';
+import clusteringComputeRaw from './compute/clustering.cs.wgsl?raw';
 
 // CONSTANTS (for use in shaders)
 // =================================
@@ -55,22 +57,22 @@ function processShaderRaw(raw: string) {
 }
 
 // Process the shared clustered deferred fullscreen code
-const clusteredDeferredFullscreenSrc: string = evalShaderRaw(clusteredDeferredFullscreenRaw);
+const clusteredDeferredFullscreenSrc: string = evalShaderRaw(computeColorRaw);
 
-function processClusterredDeferredFullscreenFrag(raw: string) {
+function processLightClustersReadFrag(raw: string) {
     return commonSrc + clusteredDeferredFullscreenSrc + evalShaderRaw(raw);
 }
 
 export const naiveVertSrc: string = processShaderRaw(naiveVertRaw);
 export const naiveFragSrc: string = processShaderRaw(naiveFragRaw);
 
-export const forwardPlusFragSrc: string = processShaderRaw(forwardPlusFragRaw);
+export const forwardPlusFragSrc: string = processLightClustersReadFrag(forwardPlusFragRaw);
 
 export const fullscreenTriangleVertSrc: string = processShaderRaw(clusteredDeferredFullscreenVertRaw);
 export const gBufferFragSrc: string = processShaderRaw(gBufferFragRaw);
-export const clusteredDeferredFullscreenFragSrc: string = processClusterredDeferredFullscreenFrag(clusteredDeferredFullscreenFragRaw);
+export const clusteredDeferredFullscreenFragSrc: string = processLightClustersReadFrag(clusteredDeferredFullscreenFragRaw);
 
-export const bloomExtractionFragSrc: string = processClusterredDeferredFullscreenFrag(bloomExtractionFragRaw);
+export const bloomExtractionFragSrc: string = processLightClustersReadFrag(bloomExtractionFragRaw);
 export const bloomCombineFragSrc: string = processShaderRaw(bloomCombineFragRaw);
 export const gaussianBlurHorizontalFragSrc: string = processShaderRaw(gaussianBlurHorizontalRaw);
 export const gaussianBlurVerticalFragSrc: string = processShaderRaw(gaussianBlurVerticalRaw);

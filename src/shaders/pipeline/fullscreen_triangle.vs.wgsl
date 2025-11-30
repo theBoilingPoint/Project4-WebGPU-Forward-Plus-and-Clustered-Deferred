@@ -1,4 +1,4 @@
-// TODO-3: implement the Clustered Deferred fullscreen vertex shader
+// TODO-3: implement the fullscreen triangle vertex shader
 
 // This shader should be very simple as it does not need all of the information passed by the the naive vertex shader.
 // CHECKITOUT: you can use this vertex shader for all of the renderers
